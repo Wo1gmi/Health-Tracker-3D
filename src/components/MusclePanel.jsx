@@ -6,17 +6,24 @@ import { getRecommendations } from '../utils/recommendations'
 
 const T = { main: '#1e293b', dim: '#64748b', sub: '#94a3b8' }
 
-export default function MusclePanel({ muscle, currentData, onSave, onClose }) {
+export default function MusclePanel({ muscle, currentData, onSave, onClose, onPreviewChange }) {
   const [pain,     setPain]     = useState(currentData?.pain  ?? 0)
   const [notes,    setNotes]    = useState(currentData?.notes ?? '')
   const [showTips, setShowTips] = useState(false)
 
   useEffect(() => {
-    setPain(currentData?.pain   ?? 0)
+    const p = currentData?.pain ?? 0
+    setPain(p)
     setNotes(currentData?.notes ?? '')
+    if (onPreviewChange) onPreviewChange(p)
   }, [muscle?.id])
 
   if (!muscle) return null
+
+  const handlePainChange = val => {
+    setPain(val)
+    if (onPreviewChange) onPreviewChange(val)
+  }
 
   const tips = getRecommendations(muscle.id)
 
@@ -46,9 +53,7 @@ export default function MusclePanel({ muscle, currentData, onSave, onClose }) {
       >
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
-          <div>
-            <h3 style={{ color: T.main, fontSize: 18, fontWeight: 700, margin: 0 }}>{muscle.name}</h3>
-          </div>
+          <h3 style={{ color: T.main, fontSize: 18, fontWeight: 700, margin: 0 }}>{muscle.name}</h3>
           <button onClick={onClose} style={{
             background: 'rgba(59,130,246,0.07)',
             border: '1px solid rgba(59,130,246,0.15)',
@@ -59,9 +64,8 @@ export default function MusclePanel({ muscle, currentData, onSave, onClose }) {
           </button>
         </div>
 
-
         <div style={{ marginBottom: 16 }}>
-          <PainSlider value={pain} onChange={setPain} />
+          <PainSlider value={pain} onChange={handlePainChange} />
         </div>
 
         <textarea

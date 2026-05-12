@@ -1,16 +1,7 @@
-import { useRef } from 'react'
-import { painToLabel } from '../utils/painColor'
-
-function valueToColor(v) {
-  if (v === 0) return '#1d4ed8'
-  if (v <= 3)  return '#3b82f6'
-  if (v <= 6)  return '#f59e0b'
-  if (v <= 8)  return '#ef4444'
-  return '#dc2626'
-}
+import { painToColor, painToLabel } from '../utils/painColor'
 
 export default function PainSlider({ value, onChange }) {
-  const color = valueToColor(value)
+  const color = painToColor(value).color
   const pct   = (value / 10) * 100
 
   const trackStyle = {
@@ -18,7 +9,7 @@ export default function PainSlider({ value, onChange }) {
   }
 
   const thumbStyle = {
-    '--thumb-color': color,
+    '--thumb-color':  color,
     '--thumb-shadow': `0 0 10px ${color}88, 0 0 20px ${color}44`,
   }
 
@@ -45,9 +36,7 @@ export default function PainSlider({ value, onChange }) {
           cursor: pointer;
           transition: transform 0.1s ease, box-shadow 0.2s ease;
         }
-        .pain-slider::-webkit-slider-thumb:hover {
-          transform: scale(1.2);
-        }
+        .pain-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
         .pain-slider::-moz-range-thumb {
           width: 22px;
           height: 22px;
@@ -61,7 +50,7 @@ export default function PainSlider({ value, onChange }) {
 
       <div className="flex items-center justify-between mb-2">
         <span style={{ color: '#64748b', fontSize: 13 }}>Уровень боли</span>
-        <span style={{ color, fontSize: 22, fontWeight: 700, lineHeight: 1 }}>
+        <span style={{ color, fontSize: 22, fontWeight: 700, lineHeight: 1, transition: 'color 0.15s' }}>
           {value}
           <span style={{ fontSize: 11, color: '#94a3b8', marginLeft: 4 }}>/ 10</span>
         </span>
@@ -80,7 +69,9 @@ export default function PainSlider({ value, onChange }) {
 
       <div className="flex justify-between mt-1" style={{ fontSize: 10, color: '#94a3b8' }}>
         <span>0</span>
-        <span style={{ color, fontSize: 12, fontWeight: 600 }}>{painToLabel(value)}</span>
+        <span style={{ color, fontSize: 12, fontWeight: 600, transition: 'color 0.15s' }}>
+          {painToLabel(value)}
+        </span>
         <span>10</span>
       </div>
     </div>

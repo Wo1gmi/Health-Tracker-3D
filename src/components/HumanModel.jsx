@@ -10,14 +10,15 @@ const DRACO_URL = `${import.meta.env.BASE_URL}draco/`
 
 useGLTF.setDecoderPath(DRACO_URL)
 
+const _base = painToColor(0)
 const MAT_MUSCLE = new THREE.MeshStandardMaterial({
-  color: new THREE.Color('#60a5fa'),   // blue-400
-  emissive: new THREE.Color('#3b82f6'),
-  emissiveIntensity: 0.12,
-  transparent: true,
-  opacity: 0.72,
-  depthWrite: true,
-  side: THREE.FrontSide,
+  color:             new THREE.Color(_base.color),
+  emissive:          new THREE.Color(_base.emissive),
+  emissiveIntensity: _base.emissiveIntensity,
+  transparent:       true,
+  opacity:           _base.opacity,
+  depthWrite:        true,
+  side:              THREE.FrontSide,
 })
 
 const MAT_BONE = new THREE.MeshStandardMaterial({

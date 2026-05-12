@@ -1,11 +1,11 @@
-import { Activity, User, TrendingDown } from 'lucide-react'
+import { Activity, User, TrendingDown, ChevronRight } from 'lucide-react'
 import { ORGANS, STATUS_LABELS } from '../data/organs'
 import { MUSCLE_GROUPS } from '../data/muscles'
 import { painToBadgeColor } from '../utils/painColor'
 
 const T = { main: '#1e293b', dim: '#64748b', sub: '#94a3b8' }
 
-export default function LeftSidebar({ muscleState, organState, getHealthScore, getPainZones }) {
+export default function LeftSidebar({ muscleState, organState, getHealthScore, getPainZones, onProfileClick }) {
   const score = getHealthScore()
   const top3  = getPainZones().slice(0, 3)
   const scoreColor = score >= 75 ? '#16a34a' : score >= 50 ? '#d97706' : '#dc2626'
@@ -13,23 +13,45 @@ export default function LeftSidebar({ muscleState, organState, getHealthScore, g
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '14px 12px', overflowY: 'auto', height: '100%' }}>
 
-      {/* Profile / Score */}
-      <div className="glass" style={{ padding: 16 }}>
+      {/* Profile card — clickable, leads to profile page */}
+      <button
+        onClick={onProfileClick}
+        style={{
+          width: '100%', textAlign: 'left', cursor: 'pointer',
+          background: 'rgba(255,255,255,0.85)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(59,130,246,0.14)',
+          borderRadius: 12,
+          boxShadow: '0 2px 12px rgba(30,80,200,0.06)',
+          padding: 16,
+          fontFamily: 'inherit',
+          transition: 'box-shadow 0.15s, border-color 0.15s',
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.boxShadow = '0 4px 20px rgba(59,130,246,0.15)'
+          e.currentTarget.style.borderColor = 'rgba(59,130,246,0.30)'
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.boxShadow = '0 2px 12px rgba(30,80,200,0.06)'
+          e.currentTarget.style.borderColor = 'rgba(59,130,246,0.14)'
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
           <div style={{
-            width: 38, height: 38, borderRadius: '50%',
+            width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
             background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
           }}>
             <User size={18} color="#fff" />
           </div>
-          <div>
+          <div style={{ flex: 1 }}>
             <div style={{ color: T.main, fontSize: 14, fontWeight: 600 }}>Мой профиль</div>
-            <div style={{ color: T.dim,  fontSize: 11 }}>Личный трекер</div>
+            <div style={{ color: T.dim,  fontSize: 11 }}>Мед. карта и документы</div>
           </div>
+          <ChevronRight size={15} color={T.sub} />
         </div>
 
+        {/* Health score ring */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{ position: 'relative', width: 60, height: 60, flexShrink: 0 }}>
             <svg width={60} height={60} viewBox="0 0 60 60">
@@ -43,7 +65,8 @@ export default function LeftSidebar({ muscleState, organState, getHealthScore, g
               />
             </svg>
             <div style={{
-              position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              position: 'absolute', inset: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: scoreColor, fontSize: 15, fontWeight: 700,
             }}>{score}</div>
           </div>
@@ -54,7 +77,7 @@ export default function LeftSidebar({ muscleState, organState, getHealthScore, g
             </div>
           </div>
         </div>
-      </div>
+      </button>
 
       {/* Top pain zones */}
       {top3.length > 0 && (
