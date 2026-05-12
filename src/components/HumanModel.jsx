@@ -5,6 +5,8 @@ import * as THREE from 'three'
 import { NODE_TO_GROUP, isBoneNode } from '../data/muscles'
 import { painToColor } from '../utils/painColor'
 
+const MODEL_URL = `${import.meta.env.BASE_URL}models/human_body.glb`
+
 const MAT_MUSCLE = new THREE.MeshStandardMaterial({
   color: new THREE.Color('#60a5fa'),   // blue-400
   emissive: new THREE.Color('#3b82f6'),
@@ -91,7 +93,7 @@ function ClickHandler({ onMuscleClick }) {
 }
 
 export default function HumanModel({ muscleState, onMuscleClick }) {
-  const { scene } = useGLTF('/models/human_body.glb')
+  const { scene } = useGLTF(MODEL_URL)
   const meshMapRef = useRef(null)
 
   useEffect(() => {
@@ -126,4 +128,4 @@ export default function HumanModel({ muscleState, onMuscleClick }) {
   )
 }
 
-useGLTF.preload('/models/human_body.glb')
+useGLTF.preload(MODEL_URL)
