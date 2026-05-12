@@ -51,6 +51,17 @@ html, body, #root {
 .col-center { grid-column: 2; position: relative; height: 100%; }
 .col-right  { grid-column: 3; overflow-y: auto; height: 100%; }
 
+/* ── Welcome banner ─────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .welcome-banner {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    max-width: min(260px, 82vw) !important;
+    top: 8px !important;
+    padding: 9px 12px !important;
+  }
+}
+
 /* ── Mobile ──────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
   html, body, #root {
