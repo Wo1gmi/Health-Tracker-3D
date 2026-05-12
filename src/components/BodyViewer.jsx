@@ -23,7 +23,7 @@ function LoadingMesh() {
   )
 }
 
-export default function BodyViewer({ muscleState, onMuscleClick }) {
+export default function BodyViewer({ activeLayer, effectiveLayerState, onGroupClick }) {
   const controlsRef = useRef()
 
   return (
@@ -36,7 +36,11 @@ export default function BodyViewer({ muscleState, onMuscleClick }) {
         <Lights />
         <Suspense fallback={<LoadingMesh />}>
           <Center>
-            <HumanModel muscleState={muscleState} onMuscleClick={onMuscleClick} />
+            <HumanModel
+              activeLayer={activeLayer}
+              effectiveLayerState={effectiveLayerState}
+              onGroupClick={onGroupClick}
+            />
           </Center>
         </Suspense>
         <OrbitControls

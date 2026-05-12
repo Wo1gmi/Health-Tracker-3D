@@ -3,8 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   User, ChevronDown, ChevronUp, Plus, Trash2, AlertCircle,
   Upload, FileText, Zap, Key, X, Eye, EyeOff, Edit2, Check, ArrowLeft,
+  Heart, Bone, Brain, Wind, Utensils, Droplets, Shield, LayoutGrid, MapPin,
 } from 'lucide-react'
-// ─── Constants ───────────────────────────────────────────────────────────────
+import { LAYER_GROUPS } from '../hooks/useBodyState'
+
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const PROFILE_KEY  = 'bodyhealth-profile'
 const SYSTEMS_KEY  = 'bodyhealth-systems'
@@ -12,20 +15,20 @@ const DOCS_KEY     = 'bodyhealth-docs'
 const SETTINGS_KEY = 'bodyhealth-settings'
 
 const BODY_SYSTEMS = [
-  { id: 'cardiovascular',  name: 'Сердечно-сосудистая', color: '#ef4444', emoji: '❤️' },
-  { id: 'endocrine',       name: 'Эндокринная',          color: '#f59e0b', emoji: '⚡' },
-  { id: 'musculoskeletal', name: 'Опорно-двигательная',  color: '#3b82f6', emoji: '🦴' },
-  { id: 'nervous',         name: 'Нервная',               color: '#8b5cf6', emoji: '🧠' },
-  { id: 'respiratory',     name: 'Дыхательная',           color: '#06b6d4', emoji: '🫁' },
-  { id: 'digestive',       name: 'Пищеварительная',       color: '#10b981', emoji: '🫀' },
-  { id: 'urogenital',      name: 'Мочеполовая',           color: '#6366f1', emoji: '🫘' },
-  { id: 'immune',          name: 'Иммунная',               color: '#f97316', emoji: '🛡️' },
+  { id: 'cardiovascular',  name: 'Сердечно-сосудистая', color: '#ef4444', Icon: Heart },
+  { id: 'endocrine',       name: 'Эндокринная',          color: '#f59e0b', Icon: Zap },
+  { id: 'musculoskeletal', name: 'Опорно-двигательная',  color: '#3b82f6', Icon: Bone },
+  { id: 'nervous',         name: 'Нервная',               color: '#8b5cf6', Icon: Brain },
+  { id: 'respiratory',     name: 'Дыхательная',           color: '#06b6d4', Icon: Wind },
+  { id: 'digestive',       name: 'Пищеварительная',       color: '#10b981', Icon: Utensils },
+  { id: 'urogenital',      name: 'Мочеполовая',           color: '#6366f1', Icon: Droplets },
+  { id: 'immune',          name: 'Иммунная',               color: '#f97316', Icon: Shield },
 ]
 
-const DEFAULT_PROFILE = { name: 'Пользователь', age: '', gender: '', updatedAt: null }
+const DEFAULT_PROFILE  = { name: 'Пользователь', age: '', gender: '', updatedAt: null }
 const DEFAULT_SETTINGS = { anthropicKey: '', openaiKey: '', selectedModel: 'anthropic' }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function load(key, fallback) {
   try {
@@ -83,7 +86,6 @@ async function extractImageText(file, apiKey) {
   return data.content[0].text
 }
 
-
 async function aiAnalyze(rawText, settings) {
   const prompt =
     'Это медицинский документ пациента. Выдели:\n' +
@@ -136,7 +138,24 @@ async function aiAnalyze(rawText, settings) {
   throw new Error('Выберите модель в настройках.')
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+// ─── Compute auto-problems from bodyState ─────────────────────────────────────
+
+function buildAutoProblems(bodyState) {
+  if (!bodyState) return []
+  return Object.entries(LAYER_GROUPS).flatMap(([layer, groups]) =>
+    Object.entries(bodyState[layer] ?? {})
+      .filter(([, v]) => v.pain > 0)
+      .map(([id, data]) => ({
+        id:    `3d-${layer}-${id}`,
+        name:  groups[id]?.name ?? id,
+        pain:  data.pain,
+        layer,
+        auto:  true,
+      }))
+  ).sort((a, b) => b.pain - a.pain)
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 const S = {
   card: {
@@ -145,12 +164,6 @@ const S = {
     boxShadow: '0 2px 16px rgba(30,80,200,0.07)',
     border: '1px solid rgba(59,130,246,0.10)',
     marginBottom: 16,
-  },
-  cardHead: {
-    padding: '16px 20px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
   },
   label: { color: '#64748b', fontSize: 12, marginBottom: 4 },
   input: {
@@ -204,7 +217,6 @@ function ProfileHeader({ profile, onChange }) {
 
   return (
     <div style={{ ...S.card, padding: '24px 28px', display: 'flex', alignItems: 'flex-start', gap: 24 }}>
-      {/* Avatar */}
       <div style={{
         width: 72, height: 72, borderRadius: '50%', flexShrink: 0,
         background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
@@ -213,7 +225,6 @@ function ProfileHeader({ profile, onChange }) {
         <User size={36} color="#fff" />
       </div>
 
-      {/* Info */}
       <div style={{ flex: 1 }}>
         {editing ? (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 140px', gap: 10, marginBottom: 12 }}>
@@ -299,12 +310,41 @@ function ProblemItem({ problem, onDelete, onToggleUrgent }) {
   )
 }
 
-function SystemCard({ system, problems = [], onAdd, onDelete, onToggleUrgent }) {
+// Auto-problem row (read-only, from 3D tracker)
+function AutoProblemItem({ problem }) {
+  const painColor =
+    problem.pain >= 8 ? '#ef4444' :
+    problem.pain >= 5 ? '#f97316' :
+    '#f59e0b'
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 8,
+      padding: '7px 0',
+      borderBottom: '1px solid rgba(59,130,246,0.07)',
+    }}>
+      <MapPin size={14} color={painColor} style={{ flexShrink: 0 }} />
+      <div style={{ flex: 1 }}>
+        <div style={{ color: '#1e293b', fontSize: 13 }}>{problem.name}</div>
+        <div style={{ color: '#94a3b8', fontSize: 11 }}>3D-трекер · боль {problem.pain}/10</div>
+      </div>
+      <span style={{
+        background: `${painColor}15`, color: painColor,
+        borderRadius: 6, padding: '2px 8px', fontSize: 12, fontWeight: 700,
+        border: `1px solid ${painColor}30`,
+        flexShrink: 0,
+      }}>{problem.pain}</span>
+    </div>
+  )
+}
+
+function SystemCard({ system, problems = [], autoProblems = [], onAdd, onDelete, onToggleUrgent }) {
   const [open,    setOpen]    = useState(false)
   const [newName, setNewName] = useState('')
 
+  const totalCount  = problems.length + autoProblems.length
   const urgentCount = problems.filter(p => p.urgent).length
-  const severity    = Math.min(problems.length / 4, 1)
+  const severity    = Math.min(totalCount / 4, 1)
 
   const handleAdd = () => {
     const name = newName.trim()
@@ -313,9 +353,10 @@ function SystemCard({ system, problems = [], onAdd, onDelete, onToggleUrgent }) 
     setNewName('')
   }
 
+  const { Icon } = system
+
   return (
     <div style={{ ...S.card, marginBottom: 10, overflow: 'hidden' }}>
-      {/* Card header */}
       <button
         onClick={() => setOpen(v => !v)}
         style={{
@@ -324,23 +365,34 @@ function SystemCard({ system, problems = [], onAdd, onDelete, onToggleUrgent }) 
           fontFamily: 'inherit',
         }}
       >
-        <span style={{ fontSize: 20 }}>{system.emoji}</span>
+        {/* Lucide icon instead of emoji */}
+        <div style={{
+          width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+          background: `${system.color}12`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Icon size={17} color={system.color} strokeWidth={1.8} />
+        </div>
+
         <div style={{ flex: 1 }}>
           <div style={{ color: '#1e293b', fontSize: 14, fontWeight: 600 }}>{system.name}</div>
           <div style={{ color: '#64748b', fontSize: 11, marginTop: 2 }}>
-            {problems.length === 0
+            {totalCount === 0
               ? 'Нет проблем'
-              : `${problems.length} ${problems.length === 1 ? 'проблема' : problems.length < 5 ? 'проблемы' : 'проблем'}${urgentCount > 0 ? ` · ${urgentCount} важных` : ''}`}
+              : `${totalCount} ${totalCount === 1 ? 'проблема' : totalCount < 5 ? 'проблемы' : 'проблем'}${urgentCount > 0 ? ` · ${urgentCount} важных` : ''}`
+            }
+            {autoProblems.length > 0 && (
+              <span style={{ color: '#3b82f6', marginLeft: 4 }}>· {autoProblems.length} из трекера</span>
+            )}
           </div>
         </div>
 
-        {/* Progress bar */}
         <div style={{ width: 64, flexShrink: 0 }}>
           <div style={{ height: 5, background: 'rgba(59,130,246,0.10)', borderRadius: 3, overflow: 'hidden' }}>
             <div style={{
               height: '100%',
               width: `${severity * 100}%`,
-              background: severity === 0 ? '#22c55e' : severity < 0.5 ? system.color : `${system.color}`,
+              background: system.color,
               borderRadius: 3,
               transition: 'width 0.4s ease',
             }} />
@@ -350,7 +402,6 @@ function SystemCard({ system, problems = [], onAdd, onDelete, onToggleUrgent }) 
         {open ? <ChevronUp size={16} color="#94a3b8" /> : <ChevronDown size={16} color="#94a3b8" />}
       </button>
 
-      {/* Expanded content */}
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
@@ -361,8 +412,25 @@ function SystemCard({ system, problems = [], onAdd, onDelete, onToggleUrgent }) 
             style={{ overflow: 'hidden' }}
           >
             <div style={{ padding: '0 16px 14px' }}>
-              {/* Problems list */}
-              {problems.length === 0 ? (
+
+              {/* Auto-problems from 3D tracker */}
+              {autoProblems.length > 0 && (
+                <div style={{
+                  marginBottom: problems.length > 0 ? 10 : 0,
+                  padding: '8px 10px',
+                  background: 'rgba(59,130,246,0.04)',
+                  borderRadius: 8,
+                  border: '1px solid rgba(59,130,246,0.10)',
+                }}>
+                  <div style={{ color: '#3b82f6', fontSize: 11, fontWeight: 600, marginBottom: 6 }}>
+                    Из 3D-трекера
+                  </div>
+                  {autoProblems.map(p => <AutoProblemItem key={p.id} problem={p} />)}
+                </div>
+              )}
+
+              {/* Manual problems */}
+              {problems.length === 0 && autoProblems.length === 0 ? (
                 <div style={{ color: '#94a3b8', fontSize: 12, padding: '8px 0', textAlign: 'center' }}>
                   Нет активных проблем
                 </div>
@@ -377,7 +445,6 @@ function SystemCard({ system, problems = [], onAdd, onDelete, onToggleUrgent }) 
                 ))
               )}
 
-              {/* Add problem */}
               <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                 <input
                   value={newName}
@@ -409,7 +476,6 @@ function DocumentCard({ doc, onDelete, onAnalyze, analyzing }) {
           <div style={{ color: '#1e293b', fontSize: 14, fontWeight: 600, wordBreak: 'break-all' }}>{doc.filename}</div>
           <div style={{ color: '#94a3b8', fontSize: 11, marginBottom: 6 }}>{fmtDate(doc.date)}</div>
 
-          {/* Preview text */}
           <div style={{ color: '#64748b', fontSize: 12, lineHeight: 1.5 }}>
             {showFull ? doc.rawText : (doc.rawText?.slice(0, 160) ?? '')}
             {(doc.rawText?.length ?? 0) > 160 && (
@@ -419,7 +485,6 @@ function DocumentCard({ doc, onDelete, onAnalyze, analyzing }) {
             )}
           </div>
 
-          {/* Summary */}
           {doc.summary && (
             <div style={{
               marginTop: 10, padding: '10px 12px',
@@ -431,7 +496,7 @@ function DocumentCard({ doc, onDelete, onAnalyze, analyzing }) {
               <div style={{ color: '#3b82f6', fontWeight: 600, marginBottom: 4 }}>AI-анализ</div>
               {doc.summary}
               <div style={{ marginTop: 8, padding: '6px 8px', background: 'rgba(245,158,11,0.08)', borderRadius: 6, color: '#92400e', fontSize: 11 }}>
-                ⚠️ Анализ выполнен AI и не является медицинским заключением. Проконсультируйтесь с врачом.
+                Анализ выполнен AI и не является медицинским заключением. Проконсультируйтесь с врачом.
               </div>
             </div>
           )}
@@ -488,7 +553,7 @@ function SettingsPanel({ settings, onChange }) {
       </div>
 
       <div style={{ padding: '10px 12px', background: 'rgba(245,158,11,0.08)', borderRadius: 8, color: '#92400e', fontSize: 12, marginBottom: 16, lineHeight: 1.5 }}>
-        ⚠️ Ключи сохраняются в localStorage вашего браузера. Не вводите ключи на чужих устройствах. Используйте только для личного пользования.
+        Ключи сохраняются в localStorage вашего браузера. Не вводите ключи на чужих устройствах.
       </div>
 
       {field('anthropic', 'Anthropic (Claude)', 'sk-ant-...')}
@@ -520,12 +585,12 @@ function SettingsPanel({ settings, onChange }) {
 
 // ─── Main ProfilePage ─────────────────────────────────────────────────────────
 
-export default function ProfilePage({ onBack }) {
+export default function ProfilePage({ onBack, bodyState }) {
   const [profile,  setProfile]  = useState(() => load(PROFILE_KEY,  DEFAULT_PROFILE))
   const [systems,  setSystems]  = useState(() => load(SYSTEMS_KEY,  {}))
   const [docs,     setDocs]     = useState(() => load(DOCS_KEY,     []))
   const [settings, setSettings] = useState(() => load(SETTINGS_KEY, DEFAULT_SETTINGS))
-  const [analyzing, setAnalyzing] = useState({}) // { [docId]: true }
+  const [analyzing, setAnalyzing] = useState({})
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef()
 
@@ -533,6 +598,9 @@ export default function ProfilePage({ onBack }) {
   useEffect(() => { save(SYSTEMS_KEY,  systems)  }, [systems])
   useEffect(() => { save(DOCS_KEY,     docs)      }, [docs])
   useEffect(() => { save(SETTINGS_KEY, settings)  }, [settings])
+
+  // All pain zones from 3D tracker → musculoskeletal system
+  const autoProblems = buildAutoProblems(bodyState)
 
   // ── System handlers ──
   const addProblem = (sysId, problem) => {
@@ -553,7 +621,6 @@ export default function ProfilePage({ onBack }) {
     const file = e.target.files?.[0]
     if (!file) return
     e.target.value = ''
-
     setUploading(true)
     try {
       let rawText = ''
@@ -569,17 +636,7 @@ export default function ProfilePage({ onBack }) {
         setUploading(false)
         return
       }
-
-      const newDoc = {
-        id: uid(),
-        filename: file.name,
-        date: new Date().toISOString(),
-        rawText,
-        summary: null,
-        analyzeError: null,
-        type: 'image',
-      }
-      setDocs(prev => [newDoc, ...prev])
+      setDocs(prev => [{ id: uid(), filename: file.name, date: new Date().toISOString(), rawText, summary: null, analyzeError: null, type: 'image' }, ...prev])
     } catch (err) {
       alert(`Ошибка извлечения текста: ${err.message}`)
     } finally {
@@ -587,9 +644,7 @@ export default function ProfilePage({ onBack }) {
     }
   }
 
-  const deleteDoc = id => {
-    setDocs(prev => prev.filter(d => d.id !== id))
-  }
+  const deleteDoc = id => setDocs(prev => prev.filter(d => d.id !== id))
 
   const analyzeDoc = async id => {
     const doc = docs.find(d => d.id === id)
@@ -605,11 +660,9 @@ export default function ProfilePage({ onBack }) {
     }
   }
 
-  // ── Render ──
   return (
     <div style={{ maxWidth: 780, margin: '0 auto', padding: '20px 20px 60px' }}>
 
-      {/* Back button */}
       {onBack && (
         <button
           onClick={onBack}
@@ -629,12 +682,15 @@ export default function ProfilePage({ onBack }) {
       <ProfileHeader profile={profile} onChange={setProfile} />
 
       {/* ── Body Systems ── */}
-      <SectionTitle style={{ marginTop: 28 }}>🫀 Системы организма</SectionTitle>
+      <SectionTitle style={{ marginTop: 28 }}>
+        <LayoutGrid size={18} color="#3b82f6" /> Системы организма
+      </SectionTitle>
       {BODY_SYSTEMS.map(sys => (
         <SystemCard
           key={sys.id}
           system={sys}
           problems={systems[sys.id] ?? []}
+          autoProblems={sys.id === 'musculoskeletal' ? autoProblems : []}
           onAdd={addProblem}
           onDelete={deleteProblem}
           onToggleUrgent={toggleUrgent}
@@ -648,13 +704,7 @@ export default function ProfilePage({ onBack }) {
           <Btn onClick={() => fileRef.current?.click()} style={{ opacity: uploading ? 0.6 : 1, pointerEvents: uploading ? 'none' : 'auto' }}>
             <Upload size={14} /> {uploading ? 'Загрузка...' : 'Прикрепить'}
           </Btn>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".jpg,.jpeg,.png"
-            style={{ display: 'none' }}
-            onChange={handleFileSelect}
-          />
+          <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png" style={{ display: 'none' }} onChange={handleFileSelect} />
         </div>
 
         {docs.length === 0 ? (
@@ -664,13 +714,7 @@ export default function ProfilePage({ onBack }) {
           </div>
         ) : (
           docs.map(doc => (
-            <DocumentCard
-              key={doc.id}
-              doc={doc}
-              onDelete={deleteDoc}
-              onAnalyze={analyzeDoc}
-              analyzing={!!analyzing[doc.id]}
-            />
+            <DocumentCard key={doc.id} doc={doc} onDelete={deleteDoc} onAnalyze={analyzeDoc} analyzing={!!analyzing[doc.id]} />
           ))
         )}
       </div>

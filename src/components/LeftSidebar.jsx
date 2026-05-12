@@ -1,19 +1,27 @@
 import { Activity, User, TrendingDown, ChevronRight } from 'lucide-react'
 import { ORGANS, STATUS_LABELS } from '../data/organs'
-import { MUSCLE_GROUPS } from '../data/muscles'
-import { painToBadgeColor } from '../utils/painColor'
+import { LAYER_GROUPS }          from '../hooks/useBodyState'
+import { painToBadgeColor }      from '../utils/painColor'
 
 const T = { main: '#1e293b', dim: '#64748b', sub: '#94a3b8' }
 
+function lookupGroupName(id) {
+  for (const groups of Object.values(LAYER_GROUPS)) {
+    if (groups[id]) return groups[id].name
+  }
+  return id
+}
+
 export default function LeftSidebar({ muscleState, organState, getHealthScore, getPainZones, onProfileClick }) {
   const score = getHealthScore()
+  // top3 across all layers (no layer arg = merged)
   const top3  = getPainZones().slice(0, 3)
   const scoreColor = score >= 75 ? '#16a34a' : score >= 50 ? '#d97706' : '#dc2626'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '14px 12px', overflowY: 'auto', height: '100%' }}>
 
-      {/* Profile card — clickable, leads to profile page */}
+      {/* Profile card */}
       <button
         onClick={onProfileClick}
         style={{
@@ -79,7 +87,7 @@ export default function LeftSidebar({ muscleState, organState, getHealthScore, g
         </div>
       </button>
 
-      {/* Top pain zones */}
+      {/* Top pain zones (all layers merged) */}
       {top3.length > 0 && (
         <div className="glass" style={{ padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
@@ -87,15 +95,13 @@ export default function LeftSidebar({ muscleState, organState, getHealthScore, g
             <span style={{ color: T.main, fontSize: 13, fontWeight: 600 }}>Топ болевых зон</span>
           </div>
           {top3.map(([id, data]) => {
-            const muscle = MUSCLE_GROUPS[id]
-            if (!muscle) return null
             const c = painToBadgeColor(data.pain)
             return (
               <div key={id} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 padding: '6px 0', borderBottom: '1px solid rgba(59,130,246,0.08)',
               }}>
-                <span style={{ color: T.dim, fontSize: 12 }}>{muscle.name}</span>
+                <span style={{ color: T.dim, fontSize: 12 }}>{lookupGroupName(id)}</span>
                 <span style={{
                   background: `${c}18`, color: c,
                   borderRadius: 6, padding: '1px 8px', fontSize: 12, fontWeight: 700,

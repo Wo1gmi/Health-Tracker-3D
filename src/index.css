@@ -24,3 +24,63 @@ html, body, #root {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: rgba(200, 220, 255, 0.2); }
 ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.25); border-radius: 2px; }
+
+/* ── App layout ─────────────────────────────────────────────────── */
+.app-root {
+  height: 100vh;
+  background: #f0f4ff;
+  overflow: hidden;
+  position: relative;
+}
+
+.app-pages {
+  position: absolute;
+  inset: 0;
+  top: var(--header-h, 48px);
+  overflow: hidden;
+}
+
+.app-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 240px 1fr 240px;
+}
+
+.col-left   { grid-column: 1; overflow-y: auto; height: 100%; }
+.col-center { grid-column: 2; position: relative; height: 100%; }
+.col-right  { grid-column: 3; overflow-y: auto; height: 100%; }
+
+/* ── Mobile ──────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  html, body, #root {
+    height: auto;
+    min-height: 100%;
+    overflow: auto;
+  }
+
+  .app-root {
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+  }
+
+  .app-pages {
+    position: relative;
+    inset: auto;
+    top: auto;
+    overflow: visible;
+    padding-top: var(--header-h, 48px);
+  }
+
+  .app-grid {
+    position: relative;
+    inset: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .col-left   { order: 1; height: auto; overflow-y: visible; }
+  .col-center { order: 0; height: 56vw; min-height: 280px; max-height: 460px; }
+  .col-right  { order: 2; height: auto; overflow-y: visible; }
+}
