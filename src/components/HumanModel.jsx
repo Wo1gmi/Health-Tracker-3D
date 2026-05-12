@@ -6,6 +6,9 @@ import { NODE_TO_GROUP, isBoneNode } from '../data/muscles'
 import { painToColor } from '../utils/painColor'
 
 const MODEL_URL = `${import.meta.env.BASE_URL}models/human_body.glb`
+const DRACO_URL = `${import.meta.env.BASE_URL}draco/`
+
+useGLTF.setDecoderPath(DRACO_URL)
 
 const MAT_MUSCLE = new THREE.MeshStandardMaterial({
   color: new THREE.Color('#60a5fa'),   // blue-400

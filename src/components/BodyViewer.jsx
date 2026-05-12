@@ -1,10 +1,7 @@
 import { Suspense, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Center, useGLTF } from '@react-three/drei'
+import { OrbitControls, Center } from '@react-three/drei'
 import HumanModel from './HumanModel'
-
-// Point draco loader at local decoder before any GLTF loads
-useGLTF.setDecoderPath(`${import.meta.env.BASE_URL}draco/`)
 
 function Lights() {
   return (
